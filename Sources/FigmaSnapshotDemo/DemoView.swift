@@ -14,6 +14,7 @@
 //
 
 import SwiftUI
+import FigmaSnapshot
 
 struct DemoView: View {
     var body: some View {

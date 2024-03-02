@@ -13,17 +13,25 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "figma-snapshot",
-            targets: ["figma-snapshot"]
+            name: "FigmaSnapshot",
+            targets: ["FigmaSnapshot"]
+        ),
+        .library(
+            name: "FigmaSnapshotDemo",
+            targets: ["FigmaSnapshotDemo"]
         ),
     ],
     targets: [
         .target(
-            name: "figma-snapshot"
+            name: "FigmaSnapshot"
+        ),
+        .target(
+            name: "FigmaSnapshotDemo",
+            dependencies: ["FigmaSnapshot"]
         ),
         .testTarget(
-            name: "figma-snapshotTests",
-            dependencies: ["figma-snapshot"]
+            name: "FigmaSnapshotTests",
+            dependencies: ["FigmaSnapshot"]
         ),
     ]
 )
