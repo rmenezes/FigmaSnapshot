@@ -72,7 +72,17 @@ final class RestService {
             )
         }
 
-        let (data, _) = try await self.urlSession.data(for: urlRequest)
+        let (data, response) = try await self.urlSession.data(for: urlRequest)
+
+        if let response = response as? HTTPURLResponse, 
+            response.statusCode != 200 {
+            if response.statusCode == 403 {
+                throw Error.expiredToken
+            }
+
+            throw Error.invalidResponse(response.statusCode)
+        }
+
         return try JSONDecoder().decode(T.self, from: data)
     }
 }
@@ -80,14 +90,16 @@ final class RestService {
 extension RestService {
     enum Error: LocalizedError {
         case invalidURL
-        case invalidResponse
+        case invalidResponse(Int)
+        case expiredToken
         case decodingError
 
         var errorDescription: String? {
             switch self {
             case .invalidURL: return "Invalid URL"
-            case .invalidResponse: return "Invalid Response"
+            case let .invalidResponse(statusCode): return "Invalid Response. Received status code: \(statusCode)"
             case .decodingError: return "Decoding Error"
+            case .expiredToken: return "Expired Token"
             }
         }
     }
