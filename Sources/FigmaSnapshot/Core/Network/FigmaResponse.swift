@@ -17,5 +17,6 @@ import Foundation
 
 struct FigmaResponse: Decodable {
     let err: String?
+    let status: Int?
     let images: [String: String]
 }
