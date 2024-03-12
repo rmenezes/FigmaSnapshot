@@ -16,18 +16,10 @@ let package = Package(
             name: "FigmaSnapshot",
             targets: ["FigmaSnapshot"]
         ),
-        .library(
-            name: "FigmaSnapshotDemo",
-            targets: ["FigmaSnapshotDemo"]
-        ),
     ],
     targets: [
         .target(
             name: "FigmaSnapshot"
-        ),
-        .target(
-            name: "FigmaSnapshotDemo",
-            dependencies: ["FigmaSnapshot"]
         ),
         .testTarget(
             name: "FigmaSnapshotTests",

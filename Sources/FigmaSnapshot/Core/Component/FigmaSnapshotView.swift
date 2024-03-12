@@ -21,6 +21,8 @@ struct FigmaSnapshotView<Content: View>: View {
     private let documentId: String
     private let opacity: Double
 
+    private let snapshotRender = SnapshotRenderer()
+
     @State private var state: SnapshotState?
 
     @StateObject private var viewModel = FigmaSnapshotViewModel()
@@ -46,6 +48,24 @@ struct FigmaSnapshotView<Content: View>: View {
                         size: proxy.size
                     )
                 )
+                .overlay(
+                    DiffButton {
+                        self.viewModel.send(
+                            .snapshot(
+                                self.snapshotRender.snapshot(
+                                    view: self.content,
+                                    size: proxy.size
+                                )
+                            )
+                        )
+                    } onDismiss: {
+                        self.viewModel.send(.snapshotDismissed)
+                    }
+                    .position(
+                        x: proxy.size.width - 20,
+                        y: .safeAreaInset.top + 50
+                    )
+                )
                 .onAppear {
                     self.viewModel.send(
                         .onAppear(
@@ -57,6 +77,7 @@ struct FigmaSnapshotView<Content: View>: View {
                 .onReceive(self.viewModel.$state) {
                     self.state = $0
                 }
+                .animation(.spring)
                 .ignoresSafeArea()
         }
     }
@@ -75,15 +96,24 @@ private extension FigmaSnapshotView {
                 .progressViewStyle(CircularProgressViewStyle())
         case let .error(message):
             Text(message)
-        case let .content(image):
+        case let .figmaImage(image):
             OnionView(
                 size: size,
                 opacity: self.opacity
             ) {
                 image
             }
+        case let .diff(image):
+            image
+                .resizable()
         case .none:
             EmptyView()
         }
+    }
+}
+
+private extension CGFloat {
+    static var safeAreaInset: UIEdgeInsets {
+        UIApplication.shared.keyWindow?.safeAreaInsets ?? .zero
     }
 }

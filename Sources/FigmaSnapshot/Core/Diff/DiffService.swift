@@ -15,39 +15,32 @@
 
 import SwiftUI
 
-struct FigmaSnapshotModifier: ViewModifier {
-    let url: String
-    let urlParser: FigmaURLParser
-    let opacity: Double
+final class DiffService {
+    func diff(
+        _ snapshot: UIImage,
+        _ reference: UIImage
+    ) -> Image? {
+        let width = max(reference.size.width, snapshot.size.width)
+        let height = max(reference.size.height, snapshot.size.height)
+        let scale = max(reference.scale, snapshot.scale)
 
-    init(
-        url: String,
-        opacity: Double
-    ) {
-        self.url = url
-        self.opacity = opacity
-        self.urlParser = FigmaURLParser()
-    }
+        let size = CGSize(width: width, height: height)
+        let rect = CGRect(origin: .zero, size: size)
 
-    func body(
-        content: Content
-    ) -> some View {
-        do {
-            let (nodeId, fileId) = try urlParser.parse(from: self.url)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = scale
+        format.opaque = true
 
-            return AnyView(
-                FigmaSnapshotView(
-                    nodeId: nodeId,
-                    documentId: fileId,
-                    opacity: self.opacity
-                ) {
-                    content
-                }
-            )
-        } catch {
-            return AnyView(
-                FigmaErrorView(error: error.localizedDescription)
-            )
+        let renderer = UIGraphicsImageRenderer(
+            size: size,
+            format: format
+        )
+
+        let differenceImage = renderer.image { _ in
+            snapshot.draw(in: rect)
+            reference.draw(in: rect, blendMode: .difference, alpha: 1)
         }
+
+        return Image(uiImage: differenceImage)
     }
 }

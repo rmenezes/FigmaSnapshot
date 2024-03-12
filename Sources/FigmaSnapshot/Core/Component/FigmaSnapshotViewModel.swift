@@ -21,35 +21,40 @@ enum SnapshotEvent: Sendable {
         documentId: String,
         nodeId: String
     )
+    case snapshotDismissed
+    case snapshot(UIImage?)
 }
 
-enum SnapshotState: Sendable {
+enum SnapshotState: Sendable, Equatable {
     case loading
     case error(String)
-    case content(Image)
+    case figmaImage(Image)
+    case diff(Image)
 }
 
 protocol SnapshotViewModel: ObservableObject {
     @MainActor
     var state: SnapshotState { get }
 
-    func send(_ event: SnapshotEvent)
+    func send(_ event: SnapshotEvent) async
 }
 
 final class FigmaSnapshotViewModel: ObservableObject {
     // MARK: - Private
 
     private let service: RestService
-    private var image: Image?
+    private let diffService: DiffService
+    private var image: UIImage?
 
     // MARK: - Public
-    @Published
-    var state: SnapshotState = .loading
+
+    @Published var state: SnapshotState = .loading
 
     init() {
         self.service = RestService(
             baseURL: "https://api.figma.com"
         )
+        self.diffService = DiffService()
     }
 }
 
@@ -60,20 +65,61 @@ extension FigmaSnapshotViewModel: SnapshotViewModel {
         switch event {
         case let .onAppear(documentId, nodeId):
             if let image = self.image {
-                self.state = .content(image)
+                self.update(
+                    .figmaImage(
+                        Image(uiImage: image)
+                    )
+                )
             } else {
                 Task {
                     do {
-                        self.state = .content(
-                            try await self.fetchFigmaImage(documentId: documentId, nodeId: nodeId)
+                        let image = try await self.fetchFigmaImage(documentId: documentId, nodeId: nodeId)
+                        self.update(
+                            .figmaImage(
+                                Image(
+                                    uiImage: image
+                                )
+                            )
                         )
+                        self.image = image
                     } catch {
-                        self.state = .error(
-                            error.localizedDescription
+                        self.update(
+                            .error(
+                                error.localizedDescription
+                            )
                         )
                     }
                 }
             }
+        case let .snapshot(view):
+            guard
+                let remoteImage = self.image,
+                let view,
+                let diffImage = self.diffService.diff(
+                    view,
+                    remoteImage
+                )
+            else { return }
+
+            self.update(
+                .diff(diffImage)
+            )
+        case .snapshotDismissed:
+            if let image = self.image {
+                self.update(
+                    .figmaImage(
+                        Image(uiImage: image)
+                    )
+                )
+            }
+        }
+    }
+
+    private func update(
+        _ state: SnapshotState
+    ) {
+        DispatchQueue.main.async {
+            self.state = state
         }
     }
 }
@@ -84,7 +130,7 @@ private extension FigmaSnapshotViewModel {
     func fetchFigmaImage(
         documentId: String,
         nodeId: String
-    ) async throws -> Image {
+    ) async throws -> UIImage {
         guard
             let accessToken = Session.shared.token
         else { throw Error.missingAccessToken }
@@ -108,7 +154,7 @@ private extension FigmaSnapshotViewModel {
             let image = UIImage(data: imageContent)
         else { throw  Error.invalidImageData }
 
-        return Image(uiImage: image)
+        return image
     }
 }
 

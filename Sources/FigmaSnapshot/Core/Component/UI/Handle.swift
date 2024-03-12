@@ -15,18 +15,14 @@
 
 import SwiftUI
 
-struct FigmaErrorView: View {
-    let error: String
-
+struct Handle: View {
     var body: some View {
-        Text(error)
-            .font(.body)
-            .foregroundColor(.red)
-            .padding(16)
-            .background(Color.gray)
+        Image(systemName: "arrow.left.and.line.vertical.and.arrow.right")
+            .font(.system(size: 20))
+            .foregroundColor(.black)
     }
 }
 
 #Preview {
-    FigmaErrorView(error: "Missing URL")
+    Handle()
 }

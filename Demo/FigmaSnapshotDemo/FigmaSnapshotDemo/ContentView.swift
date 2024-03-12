@@ -16,15 +16,46 @@
 import SwiftUI
 import FigmaSnapshot
 
-struct DemoView: View {
+struct ContentView: View {
     var body: some View {
-        Text("Hello, World!")
-            .foregroundColor(.red)
-            .background(Color.green)
+        TabView {
+            VStack {
+                Image(systemName: "globe")
+                    .font(.system(size: 100))
+            }
+            .tabItem {
+                Image(systemName: "star")
+                Text("home")
+            }
+
+            Text("Profile")
+                .tabItem {
+                    Image(systemName: "star")
+                    Text("home")
+                }
+
+            Text("Profile")
+                .tabItem {
+                    Image(systemName: "star")
+                    Text("home")
+                }
+
+            Text("Profile")
+                .tabItem {
+                    Image(systemName: "star")
+                    Text("home")
+                }
+
+            Text("Profile")
+                .tabItem {
+                    Image(systemName: "star")
+                    Text("home")
+                }
+        }
     }
 }
 
 #Preview {
-    DemoView()
-        .figmaSnapshot("<Your Figma Screen here>")
+    ContentView()
+        .figmaSnapshot("<YOUR_FIGMA_SCREEN_HERE>")
 }

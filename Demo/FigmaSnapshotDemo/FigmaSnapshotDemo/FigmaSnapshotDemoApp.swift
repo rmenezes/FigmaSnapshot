@@ -15,33 +15,11 @@
 
 import SwiftUI
 
-extension View {
-    ///
-    /// Takes a Figma file URL and a node ID and renders the node in the view as an Image
-    ///  - Parameters:
-    ///     - fileURL: The Figma file URL
-    ///     - opacity: The opacity of the rendered image (between 0.0 and 1.0).
-    public func figmaSnapshot(
-        _ fileURL: String,
-        opacity: Double = 1.0
-    ) -> some View {
-        do {
-            let urlParser = FigmaURLParser()
-            let (nodeId, fileId) = try urlParser.parse(from: fileURL)
-
-            return AnyView(
-                FigmaSnapshotView(
-                    nodeId: nodeId,
-                    documentId: fileId,
-                    opacity: opacity
-                ) {
-                    self
-                }
-            )
-        } catch {
-            return AnyView(
-                ErrorView(error: error.localizedDescription)
-            )
+@main
+struct FigmaSnapshotDemoApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
         }
     }
 }
