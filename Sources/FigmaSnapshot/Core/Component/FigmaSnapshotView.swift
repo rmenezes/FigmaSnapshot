@@ -19,11 +19,13 @@ struct FigmaSnapshotView<Content: View>: View {
     private let content: Content
     private let nodeId: String
     private let documentId: String
-    private let opacity: Double
 
     private let snapshotRender = SnapshotRenderer()
 
     @State private var state: SnapshotState?
+    @State private var isSettingsOn: Bool = false
+    @State private var opacity: Double = 1.0
+    @State private var showDifference: Bool = false
 
     @StateObject private var viewModel = FigmaSnapshotViewModel()
 
@@ -35,8 +37,8 @@ struct FigmaSnapshotView<Content: View>: View {
     ) {
         self.nodeId = nodeId
         self.documentId = documentId
-        self.opacity = opacity
         self.content = content()
+        self.opacity = opacity
     }
 
     var body: some View {
@@ -49,22 +51,8 @@ struct FigmaSnapshotView<Content: View>: View {
                     )
                 )
                 .overlay(
-                    DiffButton {
-                        self.viewModel.send(
-                            .snapshot(
-                                self.snapshotRender.snapshot(
-                                    view: self.content,
-                                    size: proxy.size
-                                )
-                            )
-                        )
-                    } onDismiss: {
-                        self.viewModel.send(.snapshotDismissed)
-                    }
-                    .position(
-                        x: proxy.size.width - 20,
-                        y: .safeAreaInset.top + 50
-                    )
+                    self.makeSettings(viewPortSize: proxy.size)
+                        .animation(.spring(), value: self.isSettingsOn)
                 )
                 .onAppear {
                     self.viewModel.send(
@@ -76,6 +64,20 @@ struct FigmaSnapshotView<Content: View>: View {
                 }
                 .onReceive(self.viewModel.$state) {
                     self.state = $0
+                }
+                .onChange(of: self.showDifference) { _ in
+                    if self.showDifference {
+                        self.viewModel.send(
+                            .snapshot(
+                                self.snapshotRender.snapshot(
+                                    view: self.content,
+                                    size: proxy.size
+                                )
+                            )
+                        )
+                    } else {
+                        self.viewModel.send(.snapshotDismissed)
+                    }
                 }
                 .animation(.spring)
                 .ignoresSafeArea()
@@ -108,6 +110,43 @@ private extension FigmaSnapshotView {
                 .resizable()
         case .none:
             EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    func makeGear(
+        viewPortSize size: CGSize
+    ) -> some View {
+        Button(action: {
+            withAnimation {
+                self.isSettingsOn = true
+            }
+        }) {
+            Image(systemName: "gear")
+                .foregroundColor(.black)
+                .frame(width: 40, height: 40)
+                .background(Color.white)
+                .clipShape(Circle())
+                .shadow(radius: 10)
+        }
+        .position(
+            x: size.width - 32,
+            y: .safeAreaInset.top + 50
+        )
+    }
+
+    @ViewBuilder
+    func makeSettings(
+        viewPortSize size: CGSize
+    ) -> some View {
+        if self.isSettingsOn {
+            SettingsView(
+                isSettingsOn: self.$isSettingsOn,
+                opacity: self.$opacity,
+                showDifference: self.$showDifference
+            )
+        } else {
+            self.makeGear(viewPortSize: size)
         }
     }
 }
